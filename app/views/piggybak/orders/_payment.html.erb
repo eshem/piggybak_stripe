@@ -1,26 +1,45 @@
 <div id="payment">
-<h3>Payment</h3>
-<div id="stripe_error">
+	<h3>Payment</h3>
+	<div id="stripe_error">
+	<%= f.fields_for :line_items, @order.line_items.detect { |li| li.line_item_type == "payment" } do |line_item_f| %>
+		<%= line_item_f.hidden_field :line_item_type, { :value => "payment" } %>
+		<%= line_item_f.fields_for :payment do |payment| %>
+			<div class="item">
+			<%= payment.label :number %>
+			<% if @order.errors.keys.include?("payments.number".to_sym) %>
+			<span class="field_with_errors">
+			<%= payment.text_field :number, :class => "required", :data => {:stripe => 'number' } %>
+			</span>
+			<% else -%>
+			<%= payment.text_field :number, :class => "required", :data => {:stripe => 'number' } %>
+			<% end -%>
+			</div>
+		
 
-</div>
-<%= f.fields_for :line_items, @order.line_items.detect { |li| li.line_item_type == "payment" } do |line_item_f| %>
-	<%= line_item_f.hidden_field :line_item_type, { :value => "payment" } %>
-	<%= line_item_f.fields_for :payment do |payment| %>
-		<div class="item">				
-		<%= payment.label :number %>
-		<%= tag :input, {:type => :text, :class => "card-number required", :id => 'myid', :name => 'payment_number'}%>				
-		</div>
-
-		<div class="item">
-		<%= payment.label :verification_value %>
-		<%= tag :input, {:type => :text, :class => "card-cvc required", :name => 'cvv'}%>
-		</div>
+			<div class="item">
+			<%= payment.label :verification_value %>
+			<% if @order.errors.keys.include?("payments.verification_value".to_sym) %>
+			<span class="field_with_errors">
+			<%= payment.text_field :verification_value, :class => "required", :data => {:stripe => 'cvv' } %>
+			</span>
+			<% else -%>
+			<%= payment.text_field :verification_value, :class => "required", :data => {:stripe => 'cvv' } %>
+			<% end -%>
+			</div>
 	
-		<div class="item">
-		<%= payment.label :month %>
-		<%= content_tag :select, options_for_select(1.upto(12).to_a), {:class=> 'card-expiry-month'}%> /
-		<%= content_tag :select, options_for_select(Time.now.year.upto(Time.now.year + 10).to_a), {:class=> 'card-expiry-year'}%>				
-		</div>						
+			<div class="item">
+			<%= payment.label :month %>
+			<% if @order.errors.keys.include?("payments.verification_value".to_sym) %>
+			<span class="field_with_errors">
+			<%= payment.select :month, 1.upto(12).to_a, :data => {:stripe => 'month' } %> /
+			<%= payment.select :year, Time.now.year.upto(Time.now.year + 10).to_a, :data => {:stripe => 'year' } %>
+			</span>
+			<% else -%>
+			<%= payment.select :month, 1.upto(12).to_a, :data => {:stripe => 'month' } %> /
+			<%= payment.select :year, Time.now.year.upto(Time.now.year + 10).to_a, :data => {:stripe => 'year' } %>
+			<% end -%>
+			</div>
+		<% end -%>
 	<% end -%>
-<% end -%>
+</div>
 </div>

@@ -1,4 +1,3 @@
-
 module PiggybakStripe
   class PaymentCalculator::Stripe
     KEYS = ['test_secret_key', 
@@ -23,5 +22,9 @@ module PiggybakStripe
       @payment_method.key_values["#{self.gateway_mode}_publishable_key".to_sym]      
     end
     
+    private
+    def stripe_params
+      params.require(:stripe).permit(:stripe_token)
+    end
   end
 end

@@ -1,0 +1,97 @@
+function stripeResponseHandler(status, response) {
+
+                if (response.error) {
+                    // re-enable the submit button
+                    $('#new_piggybak_order').find('input:submit').removeAttr("disabled");
+                    // show the errors on the form
+                    $("#stripe_error").html(response.error.message);
+                    console.log('hi');
+                } else {
+                    var form$ = $("#new_piggybak_order");
+                    // token contains id, last4, and card type
+                    var token = response['id'];
+                    console.log(token);
+                    // insert the token into the form so it gets submitted to the server
+                    // form$.append($('<input type="hidden" name="stripe_token" />').val(token));
+                    $('#order_line_items_attributes_1_payment_attributes_stripe_token').val(token);
+                    // and submit
+
+                    form$.submit();
+                }
+            }
+
+            function submitToStripe(){
+                // disable the submit button to prevent repeated clicks
+                $('#new_piggybak_order').find('input:submit').attr("disabled", "disabled");
+
+                // createToken returns immediately - the supplied callback submits the form if there are no errors
+                  Stripe.createToken({
+                    number: $('#order_line_items_attributes_1_payment_attributes_number').val(),
+                    cvc: $('#order_line_items_attributes_1_payment_attributes_verification_value').val(),
+                    exp_month: $('#order_line_items_attributes_1_payment_attributes_month').val(),
+                    exp_year: $('#order_line_items_attributes_1_payment_attributes_year').val()
+                }, stripeResponseHandler);
+                  console.log(token);
+                return false; // submit from callback
+            }
+
+            $(document).ready(function() {
+              if ($('#new_piggybak_order').length){
+                $('#new_piggybak_order').validate({
+                  submitHandler: function(form) {
+                    submitToStripe();
+                  }
+                });
+              }
+            });
+
+
+
+
+
+
+
+            <div id="payment">
+    <h3>Payment</h3>
+    <%= f.fields_for :line_items, @order.line_items.detect { |li| li.line_item_type == "payment" } do |line_item_f| %>
+        <%= line_item_f.hidden_field :line_item_type, { :value => "payment" } %>
+        <%= line_item_f.fields_for :payment do |payment| %>
+            <div class="item">
+            <%= payment.label :number %>
+            <% if @order.errors.keys.include?("payments.number".to_sym) %>
+            <span class="field_with_errors">
+            <%= payment.text_field :number, :class => "required", :data => {:stripe => 'number' } %>
+            </span>
+            <% else -%>
+            <%= payment.text_field :number, :class => "required", :data => {:stripe => 'number' } %>
+            <% end -%>
+            </div>
+        
+        <%= payment.hidden_field :stripe_token %>
+
+            <div class="item">
+            <%= payment.label :verification_value %>
+            <% if @order.errors.keys.include?("payments.verification_value".to_sym) %>
+            <span class="field_with_errors">
+            <%= payment.text_field :verification_value, :class => "required", :data => {:stripe => 'cvv' } %>
+            </span>
+            <% else -%>
+            <%= payment.text_field :verification_value, :class => "required", :data => {:stripe => 'cvv' } %>
+            <% end -%>
+            </div>
+    
+            <div class="item">
+            <%= payment.label :month %>
+            <% if @order.errors.keys.include?("payments.verification_value".to_sym) %>
+            <span class="field_with_errors">
+            <%= payment.select :month, 1.upto(12).to_a, :data => {:stripe => 'month' } %> /
+            <%= payment.select :year, Time.now.year.upto(Time.now.year + 10).to_a, :data => {:stripe => 'year' } %>
+            </span>
+            <% else -%>
+            <%= payment.select :month, 1.upto(12).to_a, :data => {:stripe => 'month' } %> /
+            <%= payment.select :year, Time.now.year.upto(Time.now.year + 10).to_a, :data => {:stripe => 'year' } %>
+            <% end -%>
+            </div>
+        <% end -%>
+    <% end -%>
+</div>
